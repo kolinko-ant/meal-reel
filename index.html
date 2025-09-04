@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MealReel – save Shorts recipes</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0f172a">
+  <style>
+    :root{ --bg:#f8fafc; --panel:#ffffff; --text:#0f172a; --muted:#475569; --line:#e2e8f0; --line2:#cbd5e1; --accent:#2563eb; }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;margin:0;background:var(--bg);color:var(--text)}
+    header{padding:16px;position:sticky;top:0;background:linear-gradient(180deg,#ffffff,#f8fafc);border-bottom:1px solid var(--line)}
+    h1{margin:0;font-size:18px}
+    main{padding:16px;max-width:1000px;margin:auto}
+    form{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+    input,select,button,textarea{padding:10px;border-radius:12px;border:1px solid var(--line2);background:#fff;color:var(--text);transition:box-shadow .2s,border-color .2s,transform .05s}
+    input,textarea{flex:1;min-width:220px}
+    input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px rgba(37,99,235,.12)}
+    button{cursor:pointer}
+    .filters{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 16px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+    .card{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel);box-shadow:0 1px 2px rgba(2,6,23,.04);transition:transform .12s ease,box-shadow .2s ease}
+    .card:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(2,6,23,.08)}
+    .thumb{width:100%;aspect-ratio:16/9;object-fit:cover;background:#eee}
+    .meta{padding:10px;display:flex;flex-direction:column;gap:8px}
+    .title{font-size:15px;font-weight:600;line-height:1.2}
+    .row{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .tag{font-size:12px;padding:3px 8px;border:1px solid var(--line2);border-radius:999px;background:#f1f5f9;color:#0f172a}
+    .tag.breakfast{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
+    .tag.lunch{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
+    .tag.dinner{background:#eef2ff;border-color:#c7d2fe;color:#3730a3}
+    .tag.uncategorized{background:#f1f5f9;border-color:#e2e8f0;color:#475569}
+    .small{font-size:12px;color:var(--muted)}
+    a.btn,button.btn{text-decoration:none;border:1px solid var(--line2);padding:6px 10px;border-radius:10px;background:#fff;color:var(--text);display:inline-flex;align-items:center;gap:6px;transition:box-shadow .2s,transform .05s,border-color .2s}
+    a.btn:hover,button.btn:hover{box-shadow:0 6px 16px rgba(2,6,23,.08);transform:translateY(-1px)}
+    .btn--primary{background:var(--accent);border-color:var(--accent);color:#fff}
+    .btn--soft{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
+    .empty{border:1px dashed var(--line2);border-radius:16px;padding:24px;text-align:center;color:var(--muted);background:#fff}
+  </style>
+</head>
+<body>
+  <header><h1>🍽️ MealReel – save YouTube Shorts recipes</h1></header>
+  <main>
+    <form id="addForm" autocomplete="off">
+      <input id="url" placeholder="Paste YouTube /shorts or /watch URL…" required>
+      <select id="category">
+        <option value="uncategorized">Auto (B/L/D)</option>
+        <option value="breakfast">Breakfast</option>
+        <option value="lunch">Lunch</option>
+        <option value="dinner">Dinner</option>
+      </select>
+      <input id="tags" placeholder="#high-protein, #quick (optional)">
+      <button type="submit" class="btn btn--primary">Add</button>
+    </form>
+
+    <div class="filters">
+      <select id="filter">
+        <option value="all">All</option>
+        <option value="breakfast">Breakfast</option>
+        <option value="lunch">Lunch</option>
+        <option value="dinner">Dinner</option>
+        <option value="favorites">Favorites</option>
+      </select>
+      <input id="search" placeholder="Search title…">
+      <a class="btn btn--soft" href="#" id="exportBtn" title="Copy selected to clipboard">Export</a>
+    </div>
+
+    <section class="grid" id="grid"></section>
+  </main>
+
+  <script>
+    const DB_NAME = 'mealreel-db', STORE = 'videos';
+    const idb = indexedDB.open(DB_NAME, 1);
+    idb.onupgradeneeded = e => e.target.result.createObjectStore(STORE, { keyPath: 'id' });
+    const db = () => new Promise((res) => { idb.onsuccess = () => res(idb.result); });
+    async function put(item){ (await db()).transaction(STORE,'readwrite').objectStore(STORE).put(item); }
+    async function all(){ return new Promise(async (res)=>{const r=(await db()).transaction(STORE).objectStore(STORE).getAll(); r.onsuccess=()=>res(r.result||[]);}); }
+    async function remove(id){ (await db()).transaction(STORE,'readwrite').objectStore(STORE).delete(id); }
+
+    function parseYouTubeId(u){
+      try{
+        const url=new URL(u.trim());
+        if (url.hostname.includes('youtu.be')) return url.pathname.slice(1);
+        if (url.pathname.startsWith('/shorts/')) return url.pathname.split('/')[2];
+        return url.searchParams.get('v');
+      }catch{ return null; }
+    }
+    const thumb = id => `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+    async function fetchTitle(url){
+      const resp = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+      if (!resp.ok) throw new Error('oEmbed failed');
+      const j = await resp.json();
+      return { title: j.title, author: j.author_name };
+    }
+
+    function autoCategory(title){
+      const t = (title||'').toLowerCase();
+      const any = s => t.includes(s);
+      if ([ 'omelette','oat','oats','pancake','toast','yogurt','granola','scramble' ].some(any)) return 'breakfast';
+      if ([ 'salad','wrap','bowl','sandwich','no-cook','quick lunch' ].some(any)) return 'lunch';
+      if ([ 'pasta','curry','stew','stir-fry','stir fry','bake','roast' ].some(any)) return 'dinner';
+      return 'uncategorized';
+    }
+
+    const $ = s => document.querySelector(s);
+    const grid = $('#grid'), filter = $('#filter'), search = $('#search');
+
+    async function addFromUrl(rawUrl, chosenCategory, tagsRaw){
+      const ytId = parseYouTubeId(rawUrl);
+      if (!ytId) { alert('Not a valid YouTube link'); return; }
+      let meta = { title: 'Recipe', author: '' };
+      try { meta = await fetchTitle(rawUrl); } catch {}
+      const cat = chosenCategory==='uncategorized' ? autoCategory(meta.title) : chosenCategory;
+      const item = {
+        id: crypto.randomUUID(),
+        url: rawUrl,
+        ytId,
+        title: meta.title,
+        channel: meta.author,
+        category: cat,
+        tags: (tagsRaw || '').split(',').map(s=>s.trim()).filter(Boolean),
+        favorite: false,
+        addedAt: Date.now()
+      };
+      await put(item);
+      render();
+    }
+
+    async function render(){
+      const items = await all();
+      const f = filter.value, q = search.value.trim().toLowerCase();
+      const show = items
+        .filter(i => f==='all' ? true : f==='favorites' ? i.favorite : i.category===f)
+        .filter(i => !q || i.title.toLowerCase().includes(q))
+        .sort((a,b)=>b.addedAt-a.addedAt);
+
+      if (!show.length){
+        grid.innerHTML = `<div class="empty">No recipes yet.<br>Paste a YouTube link above and hit <b>Add</b>.</div>`;
+        return;
+      }
+
+      grid.innerHTML = show.map(i => `
+        <article class="card" data-id="${i.id}">
+          <img class="thumb" src="${thumb(i.ytId)}" alt="">
+          <div class="meta">
+            <div class="title" title="${i.title.replace(/"/g,'&quot;')}">${i.title}</div>
+            <div class="row">
+              <span class="tag ${i.category}">${i.category}</span>
+              <span class="small">${i.channel ?? ''}</span>
+            </div>
+            <div class="row">
+              <a class="btn btn--soft" href="${i.url}" target="_blank" rel="noopener">Watch</a>
+              <div class="row" style="gap:6px;">
+                <button class="btn" data-act="fav" title="Favorite">${i.favorite ? '★' : '☆'}</button>
+                <button class="btn" data-act="del" title="Delete">🗑️</button>
+              </div>
+            </div>
+            ${i.tags?.length ? `<div class="small">Tags: ${i.tags.map(t=>` + "`<span class='tag'>${t}</span>`" + `).join(' ')}</div>` : ''}
+          </div>
+        </article>
+      `).join('');
+    }
+
+    grid.addEventListener('click', async (e)=>{
+      const btn = e.target.closest('button'); if(!btn) return;
+      const art = e.target.closest('article.card'); const id = art?.dataset.id;
+      if(!id) return;
+      const items = await all(); const i = items.find(x=>x.id===id);
+      if(!i) return;
+      if(btn.dataset.act==='del'){ await remove(id); render(); }
+      if(btn.dataset.act==='fav'){ i.favorite=!i.favorite; await put(i); render(); }
+    });
+
+    document.getElementById('addForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      await addFromUrl(document.getElementById('url').value, document.getElementById('category').value, document.getElementById('tags').value);
+      e.target.reset();
+    });
+
+    (function initFromQuery(){
+      const p = new URL(location.href).searchParams;
+      const u = p.get('u') || p.get('url');
+      if(u){ document.getElementById('url').value = u; }
+    })();
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js');
+      });
+    }
+  </script>
+</body>
+</html>
