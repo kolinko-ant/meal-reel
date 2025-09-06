@@ -42,6 +42,9 @@
 <body>
 <header><h1>🍽️ MealReel</h1></header>
 <main>
+  <button id="installPwa" style="padding:8px 10px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;display:none">
+    Install app
+  </button>
   <form id="addForm" autocomplete="off">
     <input id="url" placeholder="https://www.youtube.com/shorts/…" required style="min-width:280px;flex:1">
     <button class="btn" type="submit">Add</button>
@@ -239,6 +242,29 @@
     const items = load(); const i = items.findIndex(x=>x.id===id);
     if (i>=0){ items[i].favorite = !items[i].favorite; save(items); render(); }
   });
+
+  let deferredPrompt = null;
+  const installBtn = document.getElementById('installPwa');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'inline-block';
+  });
+
+  installBtn?.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    installBtn.style.display = 'none';
+    deferredPrompt = null;
+  });
+
+  window.addEventListener('appinstalled', () => {
+    installBtn.style.display = 'none';
+    deferredPrompt = null;
+  });
+
 
   /* ===== boot ===== */
   render();
