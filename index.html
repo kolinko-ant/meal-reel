@@ -3,7 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>MealReel (grid)</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <meta name="theme-color" content="#0f172a">
+  <title>MealReel</title>
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;margin:0;background:#f8fafc;color:#0f172a}
     header{padding:16px;border-bottom:1px solid #e5e7eb;background:#fff;position:sticky;top:0}
@@ -240,6 +242,11 @@
 
   /* ===== boot ===== */
   render();
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js');
+  }
 </script>
 </body>
 </html>
