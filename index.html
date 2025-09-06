@@ -104,25 +104,56 @@
   `).join('');
   }
 
-  /* ===== add flow (no network) ===== */
-  document.getElementById('addForm').addEventListener('submit', (e)=>{
+  /* ===== add flow (with real title via oEmbed) ===== */
+  async function fetchTitle(url) {
+    try {
+      const r = await fetch(
+              "https://www.youtube.com/oembed?format=json&url=" + encodeURIComponent(url)
+      );
+      if (!r.ok) throw 0;
+      const j = await r.json();
+      return j.title || "";
+    } catch {
+      return ""; // fallback if fetch fails
+    }
+  }
+
+  document.getElementById("addForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const url = document.getElementById('url').value.trim();
-    const err = document.getElementById('err'); err.style.display='none'; err.textContent='';
-    if (!isShorts(url)){ err.textContent='Only YouTube Shorts links are supported'; err.style.display='block'; return; }
+    const url = document.getElementById("url").value.trim();
+    const err = document.getElementById("err");
+    err.style.display = "none";
+    err.textContent = "";
+
+    if (!isShorts(url)) {
+      err.textContent = "Only YouTube Shorts links are supported";
+      err.style.display = "block";
+      return;
+    }
 
     const vid = vidFrom(url);
-    const title = `Recipe ${vid.slice(0,6)}`; // provisional title (no fetch)
-    const cat = guessCategoryFromText(url);   // try hashtags in URL text if any; else default lunch
-    const item = { id: crypto.randomUUID(), url, vid, title, category: cat, addedAt: Date.now() };
+    // try fetching the actual title
+    let title = await fetchTitle(url);
+    if (!title) title = `Recipe ${vid.slice(0, 6)}`;
+
+    const cat = guessCategoryFromText(title);
+    const item = {
+      id: crypto.randomUUID(),
+      url,
+      vid,
+      title,
+      category: cat,
+      addedAt: Date.now(),
+    };
 
     const items = load();
     items.push(item);
     save(items);
 
-    document.getElementById('url').value='';
+    document.getElementById("url").value = "";
     render();
   });
+
 
   /* ===== filter tabs ===== */
   document.getElementById('tabs').addEventListener('click', (e)=>{
