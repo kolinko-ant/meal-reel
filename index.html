@@ -62,14 +62,85 @@
     }catch{ return false; }
   }
   function vidFrom(u){ try{ return new URL(u).pathname.split('/')[2].split('?')[0]; }catch{ return ''; } }
-  function guessCategoryFromText(s){
-    const t=(s||'').toLowerCase();
-    if (/#dessert\b|dessert|cake|cookie|brownie|tiramisu|cheesecake|pudding|mousse|sweet/.test(t)) return 'dessert';
-    if (/#breakfast\b|breakfast|oat|omelet|omelette|pancake|yogurt|granola|toast/.test(t)) return 'breakfast';
-    if (/#dinner\b|dinner|pasta|curry|stew|roast|bake|steak/.test(t)) return 'dinner';
-    if (/#lunch\b|lunch|salad|wrap|bowl|sandwich/.test(t)) return 'lunch';
-    return 'lunch';
+
+  /* ===== improved auto-categorization ===== */
+  function extractHashtags(str = "") {
+    return (str.match(/#([a-z0-9_]+)/gi) || []).map(h => h.slice(1).toLowerCase());
   }
+
+  const CATEGORY_LEX = {
+    breakfast: [
+      'breakfast','omelette','omelet','oat','oats','porridge','pancake','granola','yogurt','scramble','toast',
+      'завтрак','овсян','каша','блины','йогурт','гранола','тост','омлет','омлет','скрэмбл'
+    ],
+    lunch: [
+      'lunch','salad','wrap','bowl','sandwich',
+      'обед','салат','сендвич','бутерброд','шаурма','суп','супчик','лапша'
+    ],
+    dinner: [
+      'dinner','pasta','curry','stew','stir-fry','bake','roast','casserole','steak',
+      'ужин','паста','карри','рагу','тушен','запеканка','стейк','мясо'
+    ],
+    dessert: [
+      'dessert','cake','cookie','brownie','cheesecake','tiramisu','mousse','pudding','ice cream','sweet','muffin','cupcake',
+      'десерт','торт','печенье','брауни','чизкейк','мусс','пудинг','мороженое','сладк'
+    ]
+  };
+
+
+  const FOOD_HINTS = [
+    // English
+    'recipe','cook','cooking','meal','food','protein','diet','healthy','kcal','calories',
+    'keto','vegan','vegetarian','gluten','sugar','carb',
+    // Russian
+    'рецепт','готовим','кулинар','еда','питание','обед','ужин','завтрак','полезн','диета',
+    'калор','белок','вкусн','салат','суп','блюдо'
+  ];
+
+  const NOT_FOOD = [
+    // English
+    'prank','dance','dancing','makeup','skincare','beauty','tech','asmr','gaming','stream',
+    'vlog','unboxing','review','tutorial','funny','comedy','challenge','sport','football','soccer',
+    // Russian
+    'пранк','танц','танцы','макияж','косметик','уход','гейм','игр','стрим','юмор','смешн',
+    'челлендж','спорт','футбол','хоккей','трениров','обзор','распаковк','влог'
+  ];
+
+
+  /** Score categories from title + in-title hashtags */
+  function autoCategoryFromTitle(title = "") {
+    const t = title.toLowerCase();
+    const tokens = new Set(
+            t.replace(/[^a-z0-9#\s]/g, ' ')
+                    .split(/\s+/).filter(Boolean)
+                    .concat(extractHashtags(title))
+    );
+
+    // weights
+    const W = { hashtag: 4, word: 2, titleSubstr: 1 };
+
+    // foodness gate
+    let foodScore = 0;
+    FOOD_HINTS.forEach(w => { if (t.includes(w) || tokens.has(w)) foodScore += 1; });
+    NOT_FOOD.forEach(w   => { if (t.includes(w) || tokens.has(w)) foodScore -= 1; });
+
+    const score = { breakfast:0, lunch:0, dinner:0, dessert:0 };
+
+    for (const [cat, words] of Object.entries(CATEGORY_LEX)) {
+      for (const w of words) {
+        const hw = w.replace(/\s+/g,''); // hashtag form
+        if (tokens.has(hw))        score[cat] += W.hashtag;
+        if (tokens.has(w))         score[cat] += W.word;
+        if (t.includes(w))         score[cat] += W.titleSubstr;
+      }
+    }
+
+    const top = Object.entries(score).sort((a,b)=>b[1]-a[1])[0];
+    const cat = (top && top[1] > 0) ? top[0] : 'lunch';
+    // require at least some food-like signal; otherwise default but allow user to change later
+    return (foodScore > 0) ? cat : cat;
+  }
+
 
   /* ===== render ===== */
   let FILTER = 'all';
@@ -136,7 +207,7 @@
     let title = await fetchTitle(url);
     if (!title) title = `Recipe ${vid.slice(0, 6)}`;
 
-    const cat = guessCategoryFromText(title);
+    const cat = autoCategoryFromTitle(title);
     const item = {
       id: crypto.randomUUID(),
       url,
