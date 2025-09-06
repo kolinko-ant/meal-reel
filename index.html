@@ -22,7 +22,13 @@
     /* Grid layout */
     .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
     .card { border:1px solid #e5e7eb; border-radius:12px; background:#fff; overflow:hidden }
-    .card .thumb { width:100%; aspect-ratio:9/16; object-fit:cover; display:block; background:#eee }
+    .card .thumb {
+      width:100%;
+      aspect-ratio:9/16;     /* force tall portrait */
+      object-fit:cover;      /* crop nicely */
+      border-radius:8px;
+      background:#eee;
+    }
     .card .body { padding:8px 10px }
     .card .title { font-weight:600; font-size:14px; line-height:1.2; height:2.4em; overflow:hidden }
     .card .row { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:6px }
@@ -133,7 +139,10 @@
     const html = slice.map(i => `
     <div class="card" data-id="${i.id}">
       <a href="${i.url}" target="_blank" rel="noopener" aria-label="Watch ${(i.title||'').replace(/"/g,'&quot;')}">
-        <img class="thumb" loading="lazy" src="https://img.youtube.com/vi/${i.vid}/hqdefault.jpg" alt="">
+        <img class="thumb" loading="lazy"
+         src="https://img.youtube.com/vi/${i.vid}/maxresdefault.jpg"
+         onerror="this.onerror=null;this.src='https://img.youtube.com/vi/${i.vid}/hqdefault.jpg';"
+         alt="">
       </a>
       <div class="body">
         <div class="title" title="${(i.title||'').replace(/"/g,'&quot;')}">${i.title||''}</div>
