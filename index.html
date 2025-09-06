@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>MealReel (minimal)</title>
+  <title>MealReel (grid)</title>
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;margin:0;background:#f8fafc;color:#0f172a}
     header{padding:16px;border-bottom:1px solid #e5e7eb;background:#fff;position:sticky;top:0}
@@ -17,14 +17,18 @@
     .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 16px}
     .tab{padding:6px 10px;border:1px solid #cbd5e1;border-radius:999px;background:#fff;cursor:pointer}
     .tab.active{background:#0f172a;color:#fff;border-color:#0f172a}
-    .list{display:flex;flex-direction:column;gap:10px}
-    .item{display:grid;grid-template-columns:140px 1fr;gap:12px;padding:10px;border:1px solid #e5e7eb;border-radius:12px;background:#fff;align-items:center}
-    .thumb{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;background:#eee}
-    .title{font-weight:600}
-    .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px}
-    .pill{font-size:12px;padding:3px 8px;border:1px solid #cbd5e1;border-radius:999px;text-transform:capitalize;background:#f1f5f9}
-    .muted{color:#64748b;font-size:12px}
     .empty{border:1px dashed #cbd5e1;border-radius:12px;padding:20px;text-align:center;background:#fff;color:#64748b}
+
+    /* Grid layout */
+    .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+    .card { border:1px solid #e5e7eb; border-radius:12px; background:#fff; overflow:hidden }
+    .card .thumb { width:100%; aspect-ratio:9/16; object-fit:cover; display:block; background:#eee }
+    .card .body { padding:8px 10px }
+    .card .title { font-weight:600; font-size:14px; line-height:1.2; height:2.4em; overflow:hidden }
+    .card .row { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:6px }
+    .card .pill { font-size:11px; padding:3px 8px; border:1px solid #cbd5e1; border-radius:999px; text-transform:capitalize; background:#f1f5f9; white-space:nowrap }
+    .card .star { border:none; background:none; cursor:pointer; font-size:16px; line-height:1; opacity:.6 }
+    .card .star.active { opacity:1 }
   </style>
 </head>
 <body>
@@ -44,11 +48,22 @@
     <button class="tab" data-f="dessert">Dessert</button>
   </div>
 
+  <!-- new controls bar -->
+  <div id="controls" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:8px 0 12px">
+    <input id="search" placeholder="Search…" style="flex:1; min-width:180px; padding:8px 10px; border:1px solid #cbd5e1; border-radius:10px; background:#fff">
+    <select id="sort" style="padding:8px 10px; border:1px solid #cbd5e1; border-radius:10px">
+      <option value="new">Newest</option>
+      <option value="old">Oldest</option>
+      <option value="az">A–Z</option>
+    </select>
+    <button id="filterFav" style="padding:8px 10px; border:1px solid #cbd5e1; border-radius:10px; background:#fff">⭐ Favorites</button>
+  </div>
+
   <div id="list" class="list"></div>
 </main>
 
 <script>
-  /* ===== super simple storage (localStorage) ===== */
+  /* ===== storage (localStorage) ===== */
   const KEY = 'mealreel_items_v1';
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY)||'[]'); } catch { return []; } };
   const save = (arr) => localStorage.setItem(KEY, JSON.stringify(arr));
@@ -63,187 +78,155 @@
   }
   function vidFrom(u){ try{ return new URL(u).pathname.split('/')[2].split('?')[0]; }catch{ return ''; } }
 
-  /* ===== improved auto-categorization ===== */
+  /* ===== auto-categorization ===== */
   function extractHashtags(str = "") {
     return (str.match(/#([a-z0-9_]+)/gi) || []).map(h => h.slice(1).toLowerCase());
   }
-
   const CATEGORY_LEX = {
-    breakfast: [
-      'breakfast','omelette','omelet','oat','oats','porridge','pancake','granola','yogurt','scramble','toast',
-      'завтрак','овсян','каша','блины','йогурт','гранола','тост','омлет','омлет','скрэмбл'
-    ],
-    lunch: [
-      'lunch','salad','wrap','bowl','sandwich',
-      'обед','салат','сендвич','бутерброд','шаурма','суп','супчик','лапша'
-    ],
-    dinner: [
-      'dinner','pasta','curry','stew','stir-fry','bake','roast','casserole','steak',
-      'ужин','паста','карри','рагу','тушен','запеканка','стейк','мясо'
-    ],
-    dessert: [
-      'dessert','cake','cookie','brownie','cheesecake','tiramisu','mousse','pudding','ice cream','sweet','muffin','cupcake',
-      'десерт','торт','печенье','брауни','чизкейк','мусс','пудинг','мороженое','сладк'
-    ]
+    breakfast:['breakfast','omelette','omelet','oat','oats','porridge','pancake','granola','yogurt','scramble','toast','завтрак','овсян','каша','блины','йогурт','гранола','тост','омлет','скрэмбл'],
+    lunch:['lunch','salad','wrap','bowl','sandwich','обед','салат','сендвич','бутерброд','шаурма','суп','супчик','лапша'],
+    dinner:['dinner','pasta','curry','stew','stir-fry','bake','roast','casserole','steak','ужин','паста','карри','рагу','тушен','запеканка','стейк','мясо'],
+    dessert:['dessert','cake','cookie','brownie','cheesecake','tiramisu','mousse','pudding','ice cream','sweet','muffin','cupcake','десерт','торт','печенье','брауни','чизкейк','мусс','пудинг','мороженое','сладк']
   };
+  const FOOD_HINTS = ['recipe','cook','cooking','meal','food','protein','diet','healthy','kcal','calories','keto','vegan','vegetarian','gluten','sugar','carb','рецепт','готовим','кулинар','еда','питание','обед','ужин','завтрак','полезн','диета','калор','белок','вкусн','салат','суп','блюдо'];
+  const NOT_FOOD = ['prank','dance','dancing','makeup','skincare','beauty','tech','asmr','gaming','stream','vlog','unboxing','review','tutorial','funny','comedy','challenge','sport','football','soccer','пранк','танц','танцы','макияж','косметик','уход','гейм','игр','стрим','юмор','смешн','челлендж','спорт','футбол','хоккей','трениров','обзор','распаковк','влог'];
 
-
-  const FOOD_HINTS = [
-    // English
-    'recipe','cook','cooking','meal','food','protein','diet','healthy','kcal','calories',
-    'keto','vegan','vegetarian','gluten','sugar','carb',
-    // Russian
-    'рецепт','готовим','кулинар','еда','питание','обед','ужин','завтрак','полезн','диета',
-    'калор','белок','вкусн','салат','суп','блюдо'
-  ];
-
-  const NOT_FOOD = [
-    // English
-    'prank','dance','dancing','makeup','skincare','beauty','tech','asmr','gaming','stream',
-    'vlog','unboxing','review','tutorial','funny','comedy','challenge','sport','football','soccer',
-    // Russian
-    'пранк','танц','танцы','макияж','косметик','уход','гейм','игр','стрим','юмор','смешн',
-    'челлендж','спорт','футбол','хоккей','трениров','обзор','распаковк','влог'
-  ];
-
-
-  /** Score categories from title + in-title hashtags */
   function autoCategoryFromTitle(title = "") {
     const t = title.toLowerCase();
-    const tokens = new Set(
-            t.replace(/[^a-z0-9#\s]/g, ' ')
-                    .split(/\s+/).filter(Boolean)
-                    .concat(extractHashtags(title))
-    );
-
-    // weights
+    const tokens = new Set(t.replace(/[^a-z0-9#\s]/g, ' ').split(/\s+/).filter(Boolean).concat(extractHashtags(title)));
     const W = { hashtag: 4, word: 2, titleSubstr: 1 };
-
-    // foodness gate
     let foodScore = 0;
     FOOD_HINTS.forEach(w => { if (t.includes(w) || tokens.has(w)) foodScore += 1; });
     NOT_FOOD.forEach(w   => { if (t.includes(w) || tokens.has(w)) foodScore -= 1; });
-
     const score = { breakfast:0, lunch:0, dinner:0, dessert:0 };
-
     for (const [cat, words] of Object.entries(CATEGORY_LEX)) {
       for (const w of words) {
-        const hw = w.replace(/\s+/g,''); // hashtag form
-        if (tokens.has(hw))        score[cat] += W.hashtag;
-        if (tokens.has(w))         score[cat] += W.word;
-        if (t.includes(w))         score[cat] += W.titleSubstr;
+        const hw = w.replace(/\s+/g,'');
+        if (tokens.has(hw)) score[cat] += W.hashtag;
+        if (tokens.has(w)) score[cat] += W.word;
+        if (t.includes(w)) score[cat] += W.titleSubstr;
       }
     }
-
     const top = Object.entries(score).sort((a,b)=>b[1]-a[1])[0];
     const cat = (top && top[1] > 0) ? top[0] : 'lunch';
-    // require at least some food-like signal; otherwise default but allow user to change later
     return (foodScore > 0) ? cat : cat;
   }
 
+  /* ===== search/sort/fav helpers ===== */
+  window._favOnly = false;
+  window._limit = 24;
+  function applySearchSortFav(items){
+    const q = (document.getElementById('search')?.value || '').toLowerCase();
+    let out = q ? items.filter(i => (i.title||'').toLowerCase().includes(q)) : items;
+    if (window._favOnly) out = out.filter(i => i.favorite);
+    const s = document.getElementById('sort')?.value || 'new';
+    if (s==='new') out.sort((a,b)=>b.addedAt-a.addedAt);
+    else if (s==='old') out.sort((a,b)=>a.addedAt-b.addedAt);
+    else if (s==='az') out.sort((a,b)=>(a.title||'').localeCompare(b.title||''));
+    return out;
+  }
+  function renderGridIntoList(fullList){
+    const listEl = document.getElementById('list');
+    const shown = applySearchSortFav(fullList);
+    const slice = shown.slice(0, window._limit || 24);
 
-  /* ===== render ===== */
-  let FILTER = 'all';
-  function render(){
-    const listEl=document.getElementById('list');
-    const items=load().sort((a,b)=>b.addedAt-a.addedAt);
-    const show = items.filter(i => FILTER==='all' ? true : i.category===FILTER);
-
-    if (!items.length){
-      listEl.innerHTML = '<div class="empty">No reels yet. Paste a Shorts link above and press Add.</div>';
-      return;
-    }
-
-    listEl.innerHTML = show.map(i=>`
-    <div class="item" data-id="${i.id}">
-      <img class="thumb" src="https://img.youtube.com/vi/${i.vid}/hqdefault.jpg" alt="">
-      <div>
-        <div class="title">${i.title}</div>
+    const html = slice.map(i => `
+    <div class="card" data-id="${i.id}">
+      <a href="${i.url}" target="_blank" rel="noopener" aria-label="Watch ${(i.title||'').replace(/"/g,'&quot;')}">
+        <img class="thumb" loading="lazy" src="https://img.youtube.com/vi/${i.vid}/hqdefault.jpg" alt="">
+      </a>
+      <div class="body">
+        <div class="title" title="${(i.title||'').replace(/"/g,'&quot;')}">${i.title||''}</div>
         <div class="row">
           <span class="pill">${i.category}</span>
-          <a class="muted" href="${i.url}" target="_blank" rel="noopener">▶ Watch</a>
-          <span class="muted">•</span>
-          <label class="muted">Change:
-            <select class="cat">
-              ${['breakfast','lunch','dinner','dessert'].map(c=>`<option value="${c}" ${c===i.category?'selected':''}>${c}</option>`).join('')}
-            </select>
-          </label>
-          <button class="muted" data-del style="border:none;background:none;cursor:pointer">Delete</button>
+          <button class="star ${i.favorite?'active':''}" title="Toggle favorite" data-star>⭐</button>
         </div>
       </div>
     </div>
   `).join('');
+
+    listEl.className = 'grid';
+    listEl.innerHTML = html + (shown.length > slice.length ? `
+    <button id="loadMore" style="grid-column:1/-1; padding:10px; border:1px solid #cbd5e1; border-radius:10px; background:#fff">
+      Load more (${shown.length - slice.length} left)
+    </button>` : '');
   }
 
-  /* ===== add flow (with real title via oEmbed) ===== */
+  function updateTabCounts(allItems){
+    const counts = { breakfast:0, lunch:0, dinner:0, dessert:0 };
+    allItems.forEach(i => { if (counts[i.category]!=null) counts[i.category]++; });
+    document.querySelectorAll('.tab').forEach(btn=>{
+      const f = btn.dataset.f;
+      if (f==='all') btn.textContent = `All (${allItems.length})`;
+      else btn.textContent = `${f[0].toUpperCase()+f.slice(1)} (${counts[f]||0})`;
+    });
+  }
+
+  /* ===== render ===== */
+  let FILTER = 'all';
+  function render(){
+    const items=load().sort((a,b)=>b.addedAt-a.addedAt);
+    const show = items.filter(i => FILTER==='all' ? true : i.category===FILTER);
+    if (!items.length){
+      const listEl=document.getElementById('list');
+      listEl.className='list';
+      listEl.innerHTML = '<div class="empty">No reels yet. Paste a Shorts link above and press Add.</div>';
+      return;
+    }
+    renderGridIntoList(show);
+    updateTabCounts(items);
+  }
+
+  /* ===== fetch title (oEmbed) ===== */
   async function fetchTitle(url) {
     try {
-      const r = await fetch(
-              "https://www.youtube.com/oembed?format=json&url=" + encodeURIComponent(url)
-      );
+      const r = await fetch("https://www.youtube.com/oembed?format=json&url=" + encodeURIComponent(url));
       if (!r.ok) throw 0;
       const j = await r.json();
       return j.title || "";
-    } catch {
-      return ""; // fallback if fetch fails
-    }
+    } catch { return ""; }
   }
 
+  /* ===== add flow ===== */
   document.getElementById("addForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const url = document.getElementById("url").value.trim();
     const err = document.getElementById("err");
-    err.style.display = "none";
-    err.textContent = "";
-
+    err.style.display = "none"; err.textContent = "";
     if (!isShorts(url)) {
       err.textContent = "Only YouTube Shorts links are supported";
-      err.style.display = "block";
-      return;
+      err.style.display = "block"; return;
     }
-
     const vid = vidFrom(url);
-    // try fetching the actual title
     let title = await fetchTitle(url);
     if (!title) title = `Recipe ${vid.slice(0, 6)}`;
-
     const cat = autoCategoryFromTitle(title);
-    const item = {
-      id: crypto.randomUUID(),
-      url,
-      vid,
-      title,
-      category: cat,
-      addedAt: Date.now(),
-    };
-
-    const items = load();
-    items.push(item);
-    save(items);
-
-    document.getElementById("url").value = "";
-    render();
+    const item = { id: crypto.randomUUID(), url, vid, title, category: cat, favorite:false, addedAt: Date.now() };
+    const items = load(); items.push(item); save(items);
+    document.getElementById("url").value = ""; render();
   });
 
-
-  /* ===== filter tabs ===== */
+  /* ===== tabs ===== */
   document.getElementById('tabs').addEventListener('click', (e)=>{
     const b = e.target.closest('.tab'); if(!b) return;
     document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
     b.classList.add('active'); FILTER = b.dataset.f; render();
   });
 
-  /* ===== inline actions (change category / delete) ===== */
-  document.getElementById('list').addEventListener('change', (e)=>{
-    if (!e.target.matches('select.cat')) return;
-    const id = e.target.closest('.item')?.dataset.id;
-    const items = load(); const i = items.findIndex(x=>x.id===id);
-    if (i>=0){ items[i].category = e.target.value; save(items); render(); }
+  /* ===== controls ===== */
+  document.getElementById('search').addEventListener('input', render);
+  document.getElementById('sort').addEventListener('change', render);
+  document.getElementById('filterFav').addEventListener('click', ()=>{
+    window._favOnly = !window._favOnly;
+    document.getElementById('filterFav').style.background = window._favOnly ? '#ffeaa7' : '#fff';
+    render();
   });
   document.getElementById('list').addEventListener('click', (e)=>{
-    if (!e.target.matches('[data-del]')) return;
-    const id = e.target.closest('.item')?.dataset.id;
-    const items = load().filter(x=>x.id!==id); save(items); render();
+    if (e.target.id === 'loadMore'){ window._limit += 24; render(); return; }
+    if (!e.target.matches('[data-star]')) return;
+    const id = e.target.closest('.card')?.dataset.id;
+    const items = load(); const i = items.findIndex(x=>x.id===id);
+    if (i>=0){ items[i].favorite = !items[i].favorite; save(items); render(); }
   });
 
   /* ===== boot ===== */
