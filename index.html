@@ -1,278 +1,377 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="manifest" href="./manifest.webmanifest" />
-  <meta name="theme-color" content="#0f172a">
-  <title>MealReel</title>
-  <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;margin:0;background:#f8fafc;color:#0f172a}
-    header{padding:16px;border-bottom:1px solid #e5e7eb;background:#fff;position:sticky;top:0}
-    h1{margin:0;font-size:18px}
-    main{max-width:860px;margin:0 auto;padding:16px}
-    form{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
-    input,button,select{padding:10px;border:1px solid #cbd5e1;border-radius:10px;background:#fff}
-    button{cursor:pointer}
-    .btn{background:#2563eb;border-color:#2563eb;color:#fff}
-    .error{color:#b91c1c;margin-top:4px}
-    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 16px}
-    .tab{padding:6px 10px;border:1px solid #cbd5e1;border-radius:999px;background:#fff;cursor:pointer}
-    .tab.active{background:#0f172a;color:#fff;border-color:#0f172a}
-    .empty{border:1px dashed #cbd5e1;border-radius:12px;padding:20px;text-align:center;background:#fff;color:#64748b}
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>MealReel (grid)</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <meta name="theme-color" content="#0f172a">
+    <style>
+        body {
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, sans-serif;
+            margin: 0;
+            background: #f8fafc;
+            color: #0f172a
+        }
 
-    /* Grid layout */
-    .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
-    .card { border:1px solid #e5e7eb; border-radius:12px; background:#fff; overflow:hidden }
-    .card .thumb {
-      width:100%;
-      aspect-ratio:9/16;     /* force tall portrait */
-      object-fit:cover;      /* crop nicely */
-      border-radius:8px;
-      background:#eee;
-    }
-    .card .body { padding:8px 10px }
-    .card .title { font-weight:600; font-size:14px; line-height:1.2; height:2.4em; overflow:hidden }
-    .card .row { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:6px }
-    .card .pill { font-size:11px; padding:3px 8px; border:1px solid #cbd5e1; border-radius:999px; text-transform:capitalize; background:#f1f5f9; white-space:nowrap }
-    .card .star { border:none; background:none; cursor:pointer; font-size:16px; line-height:1; opacity:.6 }
-    .card .star.active { opacity:1 }
-  </style>
+        header {
+            padding: 16px;
+            border-bottom: 1px solid #e5e7eb;
+            background: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 5
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 18px
+        }
+
+        main {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 16px
+        }
+
+        form {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 16px 0
+        }
+
+        input, button, select {
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            background: #fff
+        }
+
+        button {
+            cursor: pointer
+        }
+
+        .btn {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #fff
+        }
+
+        .error {
+            color: #b91c1c;
+            margin-top: 4px
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 8px 0 12px
+        }
+
+        .tab {
+            padding: 6px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 999px;
+            background: #fff;
+            cursor: pointer
+        }
+
+        .tab.active {
+            background: #0f172a;
+            color: #fff;
+            border-color: #0f172a
+        }
+
+        .empty {
+            border: 1px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            background: #fff;
+            color: #64748b
+        }
+
+        /* Controls */
+        #controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 8px 0 12px
+        }
+
+        /* Grid layout */
+        .grid {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        }
+
+        .card {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            background: #fff;
+            overflow: hidden
+        }
+
+        .card .thumb {
+            width: 100%;
+            aspect-ratio: 9/16;
+            object-fit: cover;
+            display: block;
+            background: #eee
+        }
+
+        .card .body {
+            padding: 8px 10px
+        }
+
+        .card .title {
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 1.2;
+            height: 2.6em;
+            overflow: hidden
+        }
+
+        .card .row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            margin-top: 6px
+        }
+
+        .card .pill {
+            font-size: 11px;
+            padding: 3px 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 999px;
+            text-transform: capitalize;
+            background: #f1f5f9;
+            white-space: nowrap
+        }
+
+        .card .star {
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            opacity: .6
+        }
+
+        .card .star.active {
+            opacity: 1
+        }
+    </style>
 </head>
 <body>
 <header><h1>🍽️ MealReel</h1></header>
 <main>
-  <button id="installPwa" style="padding:8px 10px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;display:none">
-    Install app
-  </button>
-  <form id="addForm" autocomplete="off">
-    <input id="url" placeholder="https://www.youtube.com/shorts/…" required style="min-width:280px;flex:1">
-    <button class="btn" type="submit">Add</button>
-    <div id="err" class="error" style="display:none"></div>
-  </form>
+    <form id="addForm" autocomplete="off">
+        <input id="url" placeholder="https://www.youtube.com/shorts/…" required style="min-width:280px;flex:1">
+        <button class="btn" type="submit">Add</button>
+        <div id="err" class="error" style="display:none"></div>
+    </form>
 
-  <div class="tabs" id="tabs">
-    <button class="tab active" data-f="all">All</button>
-    <button class="tab" data-f="breakfast">Breakfast</button>
-    <button class="tab" data-f="lunch">Lunch</button>
-    <button class="tab" data-f="dinner">Dinner</button>
-    <button class="tab" data-f="dessert">Dessert</button>
-  </div>
+    <div class="tabs" id="tabs">
+        <button class="tab active" data-f="all">All</button>
+        <button class="tab" data-f="breakfast">Breakfast</button>
+        <button class="tab" data-f="lunch">Lunch</button>
+        <button class="tab" data-f="dinner">Dinner</button>
+        <button class="tab" data-f="dessert">Dessert</button>
+    </div>
 
-  <!-- new controls bar -->
-  <div id="controls" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:8px 0 12px">
-    <input id="search" placeholder="Search…" style="flex:1; min-width:180px; padding:8px 10px; border:1px solid #cbd5e1; border-radius:10px; background:#fff">
-    <select id="sort" style="padding:8px 10px; border:1px solid #cbd5e1; border-radius:10px">
-      <option value="new">Newest</option>
-      <option value="old">Oldest</option>
-      <option value="az">A–Z</option>
-    </select>
-    <button id="filterFav" style="padding:8px 10px; border:1px solid #cbd5e1; border-radius:10px; background:#fff">⭐ Favorites</button>
-  </div>
+    <div id="controls">
+        <input id="search" placeholder="Search…" style="flex:1; min-width:180px;">
+        <select id="sort">
+            <option value="new">Newest</option>
+            <option value="old">Oldest</option>
+            <option value="az">A–Z</option>
+        </select>
+        <button id="filterFav">⭐ Favorites</button>
+        <button id="installPwa" style="display:none">Install app</button>
+    </div>
 
-  <div id="list" class="list"></div>
+    <div id="list" class="list"></div>
 </main>
 
-<script>
-  /* ===== storage (localStorage) ===== */
-  const KEY = 'mealreel_items_v1';
-  const load = () => { try { return JSON.parse(localStorage.getItem(KEY)||'[]'); } catch { return []; } };
-  const save = (arr) => localStorage.setItem(KEY, JSON.stringify(arr));
+<script type="module">
+    import {
+        load, save, addReelFromUrl, thumbUrl, isShorts, toast
+    } from './js/app.js';
 
-  /* ===== utils ===== */
-  function isShorts(u){
-    try{
-      const x=new URL(u.trim());
-      const host=x.hostname.replace(/^www\./,'');
-      return (host==='youtube.com'||host==='m.youtube.com') && x.pathname.startsWith('/shorts/');
-    }catch{ return false; }
-  }
-  function vidFrom(u){ try{ return new URL(u).pathname.split('/')[2].split('?')[0]; }catch{ return ''; } }
+    // ------- controls state
+    window._favOnly = false;
+    window._limit = 24;
+    let FILTER = 'all';
 
-  /* ===== auto-categorization ===== */
-  function extractHashtags(str = "") {
-    return (str.match(/#([a-z0-9_]+)/gi) || []).map(h => h.slice(1).toLowerCase());
-  }
-  const CATEGORY_LEX = {
-    breakfast:['breakfast','omelette','omelet','oat','oats','porridge','pancake','granola','yogurt','scramble','toast','завтрак','овсян','каша','блины','йогурт','гранола','тост','омлет','скрэмбл'],
-    lunch:['lunch','salad','wrap','bowl','sandwich','обед','салат','сендвич','бутерброд','шаурма','суп','супчик','лапша'],
-    dinner:['dinner','pasta','curry','stew','stir-fry','bake','roast','casserole','steak','ужин','паста','карри','рагу','тушен','запеканка','стейк','мясо'],
-    dessert:['dessert','cake','cookie','brownie','cheesecake','tiramisu','mousse','pudding','ice cream','sweet','muffin','cupcake','десерт','торт','печенье','брауни','чизкейк','мусс','пудинг','мороженое','сладк']
-  };
-  const FOOD_HINTS = ['recipe','cook','cooking','meal','food','protein','diet','healthy','kcal','calories','keto','vegan','vegetarian','gluten','sugar','carb','рецепт','готовим','кулинар','еда','питание','обед','ужин','завтрак','полезн','диета','калор','белок','вкусн','салат','суп','блюдо'];
-  const NOT_FOOD = ['prank','dance','dancing','makeup','skincare','beauty','tech','asmr','gaming','stream','vlog','unboxing','review','tutorial','funny','comedy','challenge','sport','football','soccer','пранк','танц','танцы','макияж','косметик','уход','гейм','игр','стрим','юмор','смешн','челлендж','спорт','футбол','хоккей','трениров','обзор','распаковк','влог'];
-
-  function autoCategoryFromTitle(title = "") {
-    const t = title.toLowerCase();
-    const tokens = new Set(t.replace(/[^a-z0-9#\s]/g, ' ').split(/\s+/).filter(Boolean).concat(extractHashtags(title)));
-    const W = { hashtag: 4, word: 2, titleSubstr: 1 };
-    let foodScore = 0;
-    FOOD_HINTS.forEach(w => { if (t.includes(w) || tokens.has(w)) foodScore += 1; });
-    NOT_FOOD.forEach(w   => { if (t.includes(w) || tokens.has(w)) foodScore -= 1; });
-    const score = { breakfast:0, lunch:0, dinner:0, dessert:0 };
-    for (const [cat, words] of Object.entries(CATEGORY_LEX)) {
-      for (const w of words) {
-        const hw = w.replace(/\s+/g,'');
-        if (tokens.has(hw)) score[cat] += W.hashtag;
-        if (tokens.has(w)) score[cat] += W.word;
-        if (t.includes(w)) score[cat] += W.titleSubstr;
-      }
+    function applySearchSortFav(items) {
+        const q = (document.getElementById('search')?.value || '').toLowerCase();
+        let out = q ? items.filter(i => (i.title || '').toLowerCase().includes(q)) : items;
+        if (window._favOnly) out = out.filter(i => i.favorite);
+        const s = document.getElementById('sort')?.value || 'new';
+        if (s === 'new') out.sort((a, b) => b.addedAt - a.addedAt);
+        else if (s === 'old') out.sort((a, b) => a.addedAt - b.addedAt);
+        else if (s === 'az') out.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+        return out;
     }
-    const top = Object.entries(score).sort((a,b)=>b[1]-a[1])[0];
-    const cat = (top && top[1] > 0) ? top[0] : 'lunch';
-    return (foodScore > 0) ? cat : cat;
-  }
 
-  /* ===== search/sort/fav helpers ===== */
-  window._favOnly = false;
-  window._limit = 24;
-  function applySearchSortFav(items){
-    const q = (document.getElementById('search')?.value || '').toLowerCase();
-    let out = q ? items.filter(i => (i.title||'').toLowerCase().includes(q)) : items;
-    if (window._favOnly) out = out.filter(i => i.favorite);
-    const s = document.getElementById('sort')?.value || 'new';
-    if (s==='new') out.sort((a,b)=>b.addedAt-a.addedAt);
-    else if (s==='old') out.sort((a,b)=>a.addedAt-b.addedAt);
-    else if (s==='az') out.sort((a,b)=>(a.title||'').localeCompare(b.title||''));
-    return out;
-  }
-  function renderGridIntoList(fullList){
-    const listEl = document.getElementById('list');
-    const shown = applySearchSortFav(fullList);
-    const slice = shown.slice(0, window._limit || 24);
+    function updateTabCounts(allItems) {
+        const counts = {breakfast: 0, lunch: 0, dinner: 0, dessert: 0};
+        allItems.forEach(i => {
+            if (counts[i.category] != null) counts[i.category]++;
+        });
+        document.querySelectorAll('.tab').forEach(btn => {
+            const f = btn.dataset.f;
+            if (f === 'all') btn.textContent = `All (${allItems.length})`;
+            else btn.textContent = `${f[0].toUpperCase() + f.slice(1)} (${counts[f] || 0})`;
+        });
+    }
 
-    const html = slice.map(i => `
-    <div class="card" data-id="${i.id}">
-      <a href="${i.url}" target="_blank" rel="noopener" aria-label="Watch ${(i.title||'').replace(/"/g,'&quot;')}">
-        <img class="thumb" loading="lazy"
-         src="https://img.youtube.com/vi/${i.vid}/maxresdefault.jpg"
-         onerror="this.onerror=null;this.src='https://img.youtube.com/vi/${i.vid}/hqdefault.jpg';"
-         alt="">
-      </a>
-      <div class="body">
-        <div class="title" title="${(i.title||'').replace(/"/g,'&quot;')}">${i.title||''}</div>
-        <div class="row">
-          <span class="pill">${i.category}</span>
-          <button class="star ${i.favorite?'active':''}" title="Toggle favorite" data-star>⭐</button>
+    function renderGridIntoList(fullList) {
+        const listEl = document.getElementById('list');
+        const shown = applySearchSortFav(fullList);
+        const slice = shown.slice(0, window._limit || 24);
+
+        const html = slice.map(i => {
+            const escTitle = (i.title || '').replace(/"/g, '&quot;');
+            const img = `<img class="thumb" loading="lazy"
+                   src="${thumbUrl(i.vid)}"
+                   onerror="MealReel.thumbFallback(this,'${i.vid}')"
+                   alt="">`;
+            return `
+        <div class="card" data-id="${i.id}">
+          <a href="${i.url}" target="_blank" rel="noopener" aria-label="Watch ${escTitle}">${img}</a>
+          <div class="body">
+            <div class="title" title="${escTitle}">${i.title || ''}</div>
+            <div class="row">
+              <span class="pill">${i.category}</span>
+              <button class="star ${i.favorite ? 'active' : ''}" title="Toggle favorite" data-star>⭐</button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  `).join('');
+      `;
+        }).join('');
 
-    listEl.className = 'grid';
-    listEl.innerHTML = html + (shown.length > slice.length ? `
-    <button id="loadMore" style="grid-column:1/-1; padding:10px; border:1px solid #cbd5e1; border-radius:10px; background:#fff">
-      Load more (${shown.length - slice.length} left)
-    </button>` : '');
-  }
+        listEl.className = 'grid';
+        listEl.innerHTML = html + (shown.length > slice.length ? `
+      <button id="loadMore" style="grid-column:1/-1; padding:10px; border:1px solid #cbd5e1; border-radius:10px; background:#fff">
+        Load more (${shown.length - slice.length} left)
+      </button>` : '');
+    }
 
-  function updateTabCounts(allItems){
-    const counts = { breakfast:0, lunch:0, dinner:0, dessert:0 };
-    allItems.forEach(i => { if (counts[i.category]!=null) counts[i.category]++; });
-    document.querySelectorAll('.tab').forEach(btn=>{
-      const f = btn.dataset.f;
-      if (f==='all') btn.textContent = `All (${allItems.length})`;
-      else btn.textContent = `${f[0].toUpperCase()+f.slice(1)} (${counts[f]||0})`;
+    function render() {
+        const items = load().sort((a, b) => b.addedAt - a.addedAt);
+        const show = items.filter(i => FILTER === 'all' ? true : i.category === FILTER);
+        const listEl = document.getElementById('list');
+        if (!items.length) {
+            listEl.className = 'list';
+            listEl.innerHTML = '<div class="empty">No reels yet. Paste a Shorts link above and press Add.</div>';
+            return;
+        }
+        renderGridIntoList(show);
+        updateTabCounts(items);
+
+        // highlight last added from share.html or manual add
+        const last = sessionStorage.getItem('mealreel_last_added');
+        if (last) {
+            const cards = Array.from(document.querySelectorAll('.card'));
+            const target = cards.find(c => c.querySelector('img')?.src.includes(`/${last}/`));
+            if (target) {
+                target.style.outline = '2px solid #2563eb';
+                target.scrollIntoView({behavior: 'smooth', block: 'center'});
+                toast('✅ Reel added');
+            }
+            sessionStorage.removeItem('mealreel_last_added');
+        }
+    }
+
+    // add form
+    document.getElementById("addForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const url = document.getElementById("url").value.trim();
+        const err = document.getElementById("err");
+        err.style.display = "none";
+        err.textContent = "";
+        try {
+            const item = await addReelFromUrl(url);
+            document.getElementById("url").value = "";
+            sessionStorage.setItem('mealreel_last_added', item.vid);
+            render();
+        } catch (ex) {
+            err.textContent = ex.message || "Failed to add";
+            err.style.display = "block";
+        }
     });
-  }
 
-  /* ===== render ===== */
-  let FILTER = 'all';
-  function render(){
-    const items=load().sort((a,b)=>b.addedAt-a.addedAt);
-    const show = items.filter(i => FILTER==='all' ? true : i.category===FILTER);
-    if (!items.length){
-      const listEl=document.getElementById('list');
-      listEl.className='list';
-      listEl.innerHTML = '<div class="empty">No reels yet. Paste a Shorts link above and press Add.</div>';
-      return;
-    }
-    renderGridIntoList(show);
-    updateTabCounts(items);
-  }
+    // tabs
+    document.getElementById('tabs').addEventListener('click', (e) => {
+        const b = e.target.closest('.tab');
+        if (!b) return;
+        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        FILTER = b.dataset.f;
+        render();
+    });
 
-  /* ===== fetch title (oEmbed) ===== */
-  async function fetchTitle(url) {
-    try {
-      const r = await fetch("https://www.youtube.com/oembed?format=json&url=" + encodeURIComponent(url));
-      if (!r.ok) throw 0;
-      const j = await r.json();
-      return j.title || "";
-    } catch { return ""; }
-  }
+    // controls
+    document.getElementById('search').addEventListener('input', render);
+    document.getElementById('sort').addEventListener('change', render);
+    document.getElementById('filterFav').addEventListener('click', () => {
+        window._favOnly = !window._favOnly;
+        document.getElementById('filterFav').style.background = window._favOnly ? '#ffeaa7' : '#fff';
+        render();
+    });
 
-  /* ===== add flow ===== */
-  document.getElementById("addForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const url = document.getElementById("url").value.trim();
-    const err = document.getElementById("err");
-    err.style.display = "none"; err.textContent = "";
-    if (!isShorts(url)) {
-      err.textContent = "Only YouTube Shorts links are supported";
-      err.style.display = "block"; return;
-    }
-    const vid = vidFrom(url);
-    let title = await fetchTitle(url);
-    if (!title) title = `Recipe ${vid.slice(0, 6)}`;
-    const cat = autoCategoryFromTitle(title);
-    const item = { id: crypto.randomUUID(), url, vid, title, category: cat, favorite:false, addedAt: Date.now() };
-    const items = load(); items.push(item); save(items);
-    document.getElementById("url").value = ""; render();
-  });
+    // list events
+    document.getElementById('list').addEventListener('click', (e) => {
+        if (e.target.id === 'loadMore') {
+            window._limit += 24;
+            render();
+            return;
+        }
+        if (!e.target.matches('[data-star]')) return;
+        const id = e.target.closest('.card')?.dataset.id;
+        const items = load();
+        const i = items.findIndex(x => x.id === id);
+        if (i >= 0) {
+            items[i].favorite = !items[i].favorite;
+            save(items);
+            render();
+        }
+    });
 
-  /* ===== tabs ===== */
-  document.getElementById('tabs').addEventListener('click', (e)=>{
-    const b = e.target.closest('.tab'); if(!b) return;
-    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active'); FILTER = b.dataset.f; render();
-  });
+    // PWA install prompt (manual)
+    let deferredPrompt = null;
+    const installBtn = document.getElementById('installPwa');
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.style.display = 'inline-block';
+    });
+    installBtn?.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        installBtn.style.display = 'none';
+        deferredPrompt = null;
+    });
+    window.addEventListener('appinstalled', () => {
+        installBtn.style.display = 'none';
+        deferredPrompt = null;
+    });
 
-  /* ===== controls ===== */
-  document.getElementById('search').addEventListener('input', render);
-  document.getElementById('sort').addEventListener('change', render);
-  document.getElementById('filterFav').addEventListener('click', ()=>{
-    window._favOnly = !window._favOnly;
-    document.getElementById('filterFav').style.background = window._favOnly ? '#ffeaa7' : '#fff';
+    // boot
     render();
-  });
-  document.getElementById('list').addEventListener('click', (e)=>{
-    if (e.target.id === 'loadMore'){ window._limit += 24; render(); return; }
-    if (!e.target.matches('[data-star]')) return;
-    const id = e.target.closest('.card')?.dataset.id;
-    const items = load(); const i = items.findIndex(x=>x.id===id);
-    if (i>=0){ items[i].favorite = !items[i].favorite; save(items); render(); }
-  });
 
-  let deferredPrompt = null;
-  const installBtn = document.getElementById('installPwa');
-
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    installBtn.style.display = 'inline-block';
-  });
-
-  installBtn?.addEventListener('click', async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-    installBtn.style.display = 'none';
-    deferredPrompt = null;
-  });
-
-  window.addEventListener('appinstalled', () => {
-    installBtn.style.display = 'none';
-    deferredPrompt = null;
-  });
-
-
-  /* ===== boot ===== */
-  render();
-</script>
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js');
-  }
+    // SW
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js');
+    }
 </script>
 </body>
 </html>

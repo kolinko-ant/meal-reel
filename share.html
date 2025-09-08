@@ -1,25 +1,23 @@
 <!doctype html>
-<html lang="en">
-<meta charset="utf-8">
-<title>MealReel Share</title>
-<script>
-    const params = new URLSearchParams(location.search);
-    const url = params.get('url');
-    if (url) {
-        const KEY = 'mealreel_items_v1';
-        const items = JSON.parse(localStorage.getItem(KEY) || '[]');
-        const vid = (new URL(url)).pathname.split('/')[2];
-        const item = {
-            id: crypto.randomUUID(),
-            url,
-            vid,
-            title: "Shared reel",
-            category: "lunch",
-            favorite: false,
-            addedAt: Date.now()
-        };
-        items.push(item);
-        localStorage.setItem(KEY, JSON.stringify(items));
+<html>
+<body>Adding…
+<script type="module">
+    import {addReelFromUrl, isShorts} from './js/app.js';
+
+    const sp = new URLSearchParams(location.search);
+    let url = sp.get('url') || '';
+    if (!url) {
+        const t = sp.get('text') || '';
+        const m = t.match(/https?:\/\/\S+/);
+        if (m) url = m[0];
     }
-    location.href = './'; // go back to main app
+    (async () => {
+        if (url && isShorts(url)) {
+            const item = await addReelFromUrl(url);
+            sessionStorage.setItem('mealreel_last_added', item.vid);
+        }
+        location.href = './';
+    })();
 </script>
+</body>
+</html>
