@@ -1,4 +1,4 @@
-const CACHE = 'mealreel-v1';
+const CACHE = 'mealreel-v2';
 const BASE = new URL(self.registration.scope).pathname.replace(/\/$/, '');
 const ASSETS = [`${BASE}/`, `${BASE}/index.html`, `${BASE}/manifest.webmanifest`, `${BASE}/share.html`, `${BASE}/js/app.js`];
 self.addEventListener('install', e => {
