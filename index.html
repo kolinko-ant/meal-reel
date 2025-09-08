@@ -166,6 +166,8 @@
         .card .star.active {
             opacity: 1
         }
+
+        .muted { color:#64748b; font-size:12px }
     </style>
 </head>
 <body>
@@ -250,6 +252,14 @@
             <div class="title" title="${escTitle}">${i.title || ''}</div>
             <div class="row">
               <span class="pill">${i.category}</span>
+              <label class="muted" style="display:flex;align-items:center;gap:6px">
+                <span>Change:</span>
+                <select class="cat">
+                  ${['breakfast', 'lunch', 'dinner', 'dessert']
+                            .map(c => `<option value="${c}" ${c === i.category ? 'selected' : ''}>${c}</option>`)
+                            .join('')}
+                </select>
+              </label>
               <button class="star ${i.favorite ? 'active' : ''}" title="Toggle favorite" data-star>⭐</button>
             </div>
           </div>
@@ -344,6 +354,19 @@
             render();
         }
     });
+
+    document.getElementById('list').addEventListener('change', (e)=>{
+        if (!e.target.matches('select.cat')) return;
+        const id = e.target.closest('.card')?.dataset.id;
+        const items = load();
+        const idx = items.findIndex(x => x.id === id);
+        if (idx >= 0) {
+            items[idx].category = e.target.value;
+            save(items);
+            render();
+        }
+    });
+
 
     // PWA install prompt (manual)
     let deferredPrompt = null;
